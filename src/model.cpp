@@ -294,11 +294,9 @@ InferenceState::InferenceState(const std::shared_ptr<Config> config):
   _v = new float[config->n_kv_heads * config->head_dim]();
   _att = new float[config->n_heads * config->max_seq_len]();
   _logits = new float[config->vocab_size]();
-  if (config->n_experts > 0) {
-    _moe_weights = new float[config->n_experts]();
-    _active_experts = new int[config->n_experts_active]();
-    _active_experts_weights = new float[config->n_experts_active]();
-  }
+  _moe_weights = new float[config->n_experts]();
+  _active_experts = new int[config->n_experts_active]();
+  _active_experts_weights = new float[config->n_experts_active]();
 }
 
 InferenceState::~InferenceState() {
@@ -313,11 +311,9 @@ InferenceState::~InferenceState() {
     delete[] _v;
     delete[] _att;
     delete[] _logits;
-    if (_moe_weights != nullptr) {
-      delete[] _moe_weights;
-      delete[] _active_experts;
-      delete[] _active_experts_weights;
-    }
+    delete[] _moe_weights;
+    delete[] _active_experts;
+    delete[] _active_experts_weights;
   } else {
     free_cuda(_x);
     free_cuda(_xb);
@@ -330,11 +326,9 @@ InferenceState::~InferenceState() {
     free_cuda(_att);
     unregister_cuda_host(_logits);
     delete[] _logits;
-    if (_moe_weights != nullptr) {
-      free_cuda(_moe_weights);
-      free_cuda(_active_experts);
-      free_cuda(_active_experts_weights);
-    }
+    free_cuda(_moe_weights);
+    free_cuda(_active_experts);
+    free_cuda(_active_experts_weights);
   }
 }
 
@@ -354,11 +348,9 @@ void InferenceState::cuda() {
   _v = static_cast<float*>(upload_cuda(_v, _config->n_kv_heads * _config->head_dim * sizeof(float)));
   _att = static_cast<float*>(upload_cuda(_att, _config->n_heads * _config->max_seq_len * sizeof(float)));
   register_cuda_host(_logits, _config->vocab_size * sizeof(float));
-  if (_moe_weights != nullptr) {
-    _moe_weights = static_cast<float*>(upload_cuda(_moe_weights, _config->n_experts * sizeof(float)));
-    _active_experts = static_cast<int*>(upload_cuda(_active_experts, _config->n_experts_active * sizeof(int)));
-    _active_experts_weights = static_cast<float*>(upload_cuda(_active_experts_weights, _config->n_experts_active * sizeof(float)));
-  }
+  _moe_weights = static_cast<float*>(upload_cuda(_moe_weights, _config->n_experts * sizeof(float)));
+  _active_experts = static_cast<int*>(upload_cuda(_active_experts, _config->n_experts_active * sizeof(int)));
+  _active_experts_weights = static_cast<float*>(upload_cuda(_active_experts_weights, _config->n_experts_active * sizeof(float)));
 }
 
 Model::Model(YALMData& yalm, int context) {
